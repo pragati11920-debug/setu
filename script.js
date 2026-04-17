@@ -3,12 +3,10 @@ let step = 0, userData = {}, lang = 'en';
 const t = {
   en:{welcome:"Hello! I am Setu. I will help you find government schemes.",state:"Which state?",income:"Enter your yearly income (₹):",category:"Category?",age:"Age?",results:"You are eligible for:"},
   hi:{welcome:"नमस्ते! मैं सेतु हूँ। मैं आपको सरकारी योजनाएं खोजने में मदद करूंगा।",state:"राज्य?",income:"अपनी वार्षिक आय दर्ज करें (₹):",category:"श्रेणी?",age:"उम्र?",results:"आप पात्र हैं:"}
-  // (keep rest same as original file)
 };
 
 const schemes = [
   {name:{en:"PM Kisan",hi:"पीएम किसान"},category:"Farmer",maxIncome:500000,reason:{en:"For farmers",hi:"किसानों के लिए"},benefit:{en:"₹6000/year",hi:"₹6000/वर्ष"},link:"https://pmkisan.gov.in/"}
-  // (keep rest same as original file)
 ];
 
 function tr(k){return t[lang][k]||t.en[k]}

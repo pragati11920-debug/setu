@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Setu</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#F5F5DC;display:flex;justify-content:center;align-items:center;height:100vh}
+.container{width:100%;max-width:420px;height:92vh;background:#fff;border-radius:16px;display:flex;flex-direction:column;box-shadow:0 10px 25px rgba(0,0,0,.08);overflow:hidden}
+.header{background:#6B8E23;color:#fff;padding:14px;display:flex;justify-content:space-between;align-items:center}
+.header small{font-size:11px;display:block}
+.chat{flex:1;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+.message{max-width:80%;padding:10px 14px;border-radius:14px;font-size:14px}
+.bot{background:#F5F5DC;align-self:flex-start}
+.user{background:#6B8E23;color:#fff;align-self:flex-end}
+.options{display:flex;flex-wrap:wrap;gap:8px}
+button.option{background:#6B8E23;color:#fff;border:none;padding:8px 14px;border-radius:20px;cursor:pointer}
+.dropdown{padding:8px;border-radius:10px;border:1px solid #ddd;width:100%}
+.input-area{display:flex;padding:12px;border-top:1px solid #eee}
+input{flex:1;padding:10px;border-radius:20px;border:1px solid #ddd}
+button.send{background:#6B8E23;color:#fff;border:none;border-radius:20px;padding:10px 14px;margin-left:8px}
+.card{border:1px solid #eee;border-radius:12px;padding:14px}
+.divider{height:1px;background:#eee;margin:8px 0}
+.apply{background:#6B8E23;color:#fff;border:none;border-radius:8px;padding:6px 10px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<div>
+<strong>Setu</strong>
+<small>Bridging you to the right government schemes</small>
+</div>
+<select onchange="changeLang(this.value)">
+<option value="en">English</option>
+<option value="hi">हिंदी</option>
+<option value="bn">বাংলা</option>
+<option value="ta">தமிழ்</option>
+<option value="te">తెలుగు</option>
+<option value="mr">मराठी</option>
+<option value="gu">ગુજરાતી</option>
+<option value="kn">ಕನ್ನಡ</option>
+<option value="ml">മലയാളം</option>
+<option value="pa">ਪੰਜਾਬੀ</option>
+<option value="or">ଓଡ଼ିଆ</option>
+<option value="as">অসমীয়া</option>
+</select>
+</div>
+
+<div id="chat" class="chat"></div>
+
+<div class="input-area">
+<input id="input" placeholder="Type here (enter income as number e.g. 200000)">
+<button class="send" onclick="sendMessage()">Send</button>
+</div>
+</div>
+
+<script>
+let step=0,userData={},lang='en';
+
+const t={
+en:{welcome:"Hello! I am Setu. I will help you find government schemes.",state:"Which state?",income:"Enter your yearly income (₹):",category:"Category?",age:"Age?",results:"You are eligible for:"},
+hi:{welcome:"नमस्ते! मैं सेतु हूँ। मैं आपको सरकारी योजनाएं खोजने में मदद करूंगा।",state:"राज्य?",income:"अपनी वार्षिक आय दर्ज करें (₹):",category:"श्रेणी?",age:"उम्र?",results:"आप पात्र हैं:"},
+bn:{welcome:"হ্যালো! আমি সেতু। আমি আপনাকে সরকারি স্কিম খুঁজতে সাহায্য করব।",state:"রাজ্য?",income:"আপনার আয় লিখুন (₹):",category:"বিভাগ?",age:"বয়স?",results:"আপনি উপযুক্ত:"},
+ta:{welcome:"வணக்கம்! நான் சேது. அரசு திட்டங்களை கண்டுபிடிக்க உதவுவேன்.",state:"மாநிலம்?",income:"வருமானம் உள்ளிடவும் (₹):",category:"வகை?",age:"வயது?",results:"நீங்கள் தகுதி பெறுகிறீர்கள்:"},
+te:{welcome:"హలో! నేను సేతు. ప్రభుత్వ పథకాలు కనుగొనడంలో సహాయం చేస్తాను.",state:"రాష్ట్రం?",income:"ఆదాయం నమోదు చేయండి (₹):",category:"వర్గం?",age:"వయస్సు?",results:"మీరు అర్హులు:"},
+mr:{welcome:"नमस्कार! मी सेतू आहे. मी तुम्हाला सरकारी योजना शोधण्यात मदत करेन.",state:"राज्य?",income:"उत्पन्न टाका (₹):",category:"श्रेणी?",age:"वय?",results:"तुम्ही पात्र आहात:"},
+gu:{welcome:"નમસ્તે! હું સેતુ છું. હું તમને સરકારી યોજનાઓ શોધવામાં મદદ કરીશ.",state:"રાજ્ય?",income:"આવક દાખલ કરો (₹):",category:"શ્રેણી?",age:"ઉંમર?",results:"તમે પાત્ર છો:"},
+kn:{welcome:"ನಮಸ್ಕಾರ! ನಾನು ಸೇತು. ಸರ್ಕಾರಿ ಯೋಜನೆಗಳನ್ನು ಹುಡುಕಲು ಸಹಾಯ ಮಾಡುತ್ತೇನೆ.",state:"ರಾಜ್ಯ?",income:"ಆದಾಯ ನಮೂದಿಸಿ (₹):",category:"ವರ್ಗ?",age:"ವಯಸ್ಸು?",results:"ನೀವು ಅರ್ಹರು:"},
+ml:{welcome:"ഹലോ! ഞാൻ സേതു. സർക്കാർ പദ്ധതികൾ കണ്ടെത്താൻ സഹായിക്കും.",state:"സംസ്ഥാനം?",income:"വരുമാനം നൽകുക (₹):",category:"വിഭാഗം?",age:"വയസ്?",results:"നിങ്ങൾക്ക് യോഗ്യതയുണ്ട്:"},
+pa:{welcome:"ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਸੇਤੂ ਹਾਂ। ਮੈਂ ਤੁਹਾਨੂੰ ਯੋਜਨਾਵਾਂ ਲੱਭਣ ਵਿੱਚ ਮਦਦ ਕਰਾਂਗਾ।",state:"ਰਾਜ?",income:"ਆਮਦਨ ਦਰਜ ਕਰੋ (₹):",category:"ਸ਼੍ਰੇਣੀ?",age:"ਉਮਰ?",results:"ਤੁਸੀਂ ਯੋਗ ਹੋ:"},
+or:{welcome:"ନମସ୍କାର! ମୁଁ ସେତୁ. ଯୋଜନା ଖୋଜିବାରେ ସହାୟତା କରିବି.",state:"ରାଜ୍ୟ?",income:"ଆୟ ଦିଅନ୍ତୁ (₹):",category:"ଶ୍ରେଣୀ?",age:"ବୟସ?",results:"ଆପଣ ଯୋଗ୍ୟ:"},
+as:{welcome:"নমস্কাৰ! মই সেতু। আঁচনি বিচাৰি সহায় কৰিম।",state:"ৰাজ্য?",income:"আয় লিখক (₹):",category:"শ্ৰেণী?",age:"বয়স?",results:"আপুনি যোগ্য:"}
+};
+
+// Scheme rules added
+const schemes=[
+{name:{en:"PM Kisan",hi:"पीएम किसान"},category:"Farmer",maxIncome:500000,reason:{en:"For farmers",hi:"किसानों के लिए"},benefit:{en:"₹6000/year",hi:"₹6000/वर्ष"},link:"https://pmkisan.gov.in/"},
+{name:{en:"Ayushman Bharat",hi:"आयुष्मान भारत"},category:"Any",maxIncome:300000,reason:{en:"Low income health support",hi:"कम आय स्वास्थ्य सहायता"},benefit:{en:"₹5 lakh insurance",hi:"₹5 लाख बीमा"},link:"https://pmjay.gov.in/"},
+{name:{en:"PM Ujjwala",hi:"उज्ज्वला योजना"},category:"Women",maxIncome:200000,reason:{en:"For women",hi:"महिलाओं के लिए"},benefit:{en:"Free LPG",hi:"मुफ्त गैस"},link:"https://www.pmuy.gov.in/"},
+{name:{en:"National Scholarship",hi:"राष्ट्रीय छात्रवृत्ति"},category:"Student",maxIncome:400000,reason:{en:"For students",hi:"छात्रों के लिए"},benefit:{en:"Education support",hi:"शिक्षा सहायता"},link:"https://scholarships.gov.in/"},
+{name:{en:"Atal Pension Yojana",hi:"अटल पेंशन योजना"},category:"Senior Citizen",maxIncome:500000,reason:{en:"For old age security",hi:"बुढ़ापे के लिए"},benefit:{en:"Monthly pension",hi:"मासिक पेंशन"},link:"https://npscra.nsdl.co.in/"},
+{name:{en:"Mudra Loan",hi:"मुद्रा लोन"},category:"Business",maxIncome:1000000,reason:{en:"For small businesses",hi:"छोटे व्यवसाय के लिए"},benefit:{en:"Loan up to ₹10 lakh",hi:"₹10 लाख तक ऋण"},link:"https://www.mudra.org.in/"},
+{name:{en:"Skill India",hi:"स्किल इंडिया"},category:"Unemployed",maxIncome:500000,reason:{en:"Skill development",hi:"कौशल विकास"},benefit:{en:"Free training",hi:"मुफ्त प्रशिक्षण"},link:"https://www.skillindia.gov.in/"},
+{name:{en:"Disability Pension",hi:"विकलांग पेंशन"},category:"Disabled",maxIncome:300000,reason:{en:"Support for disabled",hi:"विकलांगों के लिए"},benefit:{en:"Monthly aid",hi:"मासिक सहायता"},link:"https://www.india.gov.in/"}
+];
+
+function tr(k){return t[lang][k]||t.en[k]}
+function txt(o){return o[lang]||o.en}
+
+function addMessage(text,type='bot'){
+let m=document.createElement('div');m.className='message '+type;m.innerText=text;
+document.getElementById('chat').appendChild(m);scroll();}
+
+function addButtons(arr){
+let wrap=document.createElement('div');wrap.className='options';
+arr.forEach(v=>{let b=document.createElement('button');b.className='option';b.innerText=v;b.onclick=()=>selectOption(v);wrap.appendChild(b)});
+document.getElementById('chat').appendChild(wrap);
+}
+
+function addDropdown(){
+let s=document.createElement('select');s.className='dropdown';
+["Uttar Pradesh","Bihar","Maharashtra","Tamil Nadu"].forEach(v=>{let o=document.createElement('option');o.value=v;o.innerText=v;s.appendChild(o)});
+s.onchange=e=>selectOption(e.target.value);
+document.getElementById('chat').appendChild(s);
+}
+
+function selectOption(v){addMessage(v,'user');handle(v)}
+
+function sendMessage(){
+let i=document.getElementById('input');
+if(!i.value)return;
+addMessage(i.value,'user');
+handle(i.value);
+i.value='';
+}
+
+function handle(v){
+step++;
+if(step===1){addMessage(tr('state'));addDropdown()}
+else if(step===2){userData.state=v;addMessage(tr('income'))}
+else if(step===3){userData.income=parseInt(v)||0;addMessage(tr('category'));addButtons(["Student","Farmer","Worker","Women","Senior Citizen","Business","Unemployed","Disabled"]) }
+else if(step===4){userData.category=v;addMessage(tr('age'))}
+else if(step===5){userData.age=parseInt(v)||0;showResults()}
+}
+
+function showResults(){
+addMessage(tr('results'));
+let chat=document.getElementById('chat');
+
+let filtered = schemes.filter(s=>{
+let incomeOk = userData.income <= s.maxIncome;
+let categoryOk = s.category==="Any" || s.category.toLowerCase()===userData.category.toLowerCase();
+return incomeOk && categoryOk;
+});
+
+if(filtered.length===0) filtered = schemes; // fallback
+
+filtered.forEach(s=>{
+let c=document.createElement('div');c.className='card';
+c.innerHTML=`
+<strong>${txt(s.name)}</strong>
+<div class='divider'></div>
+<p><b>Why:</b> ${txt(s.reason)}</p>
+<p><b>Benefit:</b> ${txt(s.benefit)}</p>
+<button class='apply' onclick="window.open('${s.link}','_blank')">Apply Now</button>`;
+chat.appendChild(c);
+});
+scroll();
+}
+
+function changeLang(l){lang=l;reset()}
+function reset(){document.getElementById('chat').innerHTML='';step=0;start()}
+function scroll(){let c=document.getElementById('chat');c.scrollTop=c.scrollHeight}
+function start(){addMessage(tr('welcome'))}
+
+start();
+</script>
+</body>
+</html>
